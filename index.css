@@ -1,0 +1,62 @@
+#column-container{
+    width: 100%;
+}
+
+.header{
+    color: lightcoral;
+    padding-left: 10px;
+}
+
+.subreddit{
+    padding-left: 10px;
+}
+
+.movie{
+    width: 5px;
+    overflow: scroll;
+ 
+}
+
+.post-window{
+    background-color: lightgray;
+    /* width: 700px; */
+    margin: auto;
+    /* overflow: scroll; */
+    max-height: 400px;
+    width: 60%;
+    border-bottom: white 5px solid;
+    overflow: hidden;
+    
+}
+
+.text-div{
+    background-color: aqua;
+    overflow: scroll;
+}
+
+.image, .movies{
+    object-fit: contain;
+    width: 360px;
+    height: 205px;
+}
+
+.thumbnail{
+    width: 75px;
+    height: auto;
+    border-radius: 10px;
+}
+
+.text{
+    color: white;
+    display: flex;
+    width: 70%;
+    object-fit: contain;
+    text-align: center;
+    margin: auto;
+}
+
+.header-div{
+    background-color: lightsalmon;
+    display: flex;
+    justify-content: space-between;
+}
