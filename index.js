@@ -1,4 +1,10 @@
+//for checking if there's media or self text to send over to comments via query
+let mediaType;
+let selfText
+
 const columnContainer = document.getElementById('column-container')
+
+
 
 const getResults = async() => {
     const data = await fetch('https://www.reddit.com/r/popular.json')
@@ -20,11 +26,15 @@ const getResults = async() => {
 
 
      //FOR SUBREDDIT NAME
+    
 
         const subReddit = document.createElement('h4')
         subReddit.classList.add('subreddit')
         subReddit.innerHTML = content.subreddit
+
         headerDiv.appendChild(subReddit)
+
+
 
     // FOR THUMBNAILS
 
@@ -44,13 +54,24 @@ const getResults = async() => {
         }
     
     
-    //FOR TITLE
+    //FOR TITLE AND CREATING THE ANCHOR TAG
+        let name = content.name
+        name = name.split('_')[1]
 
+        let title = content.title.split('').filter(char => !/\p{P}/gu.test(char)).join('')
+        title = title.replaceAll(' ', '_')
+    
 
         let header = document.createElement('h3')
         header.classList.add('header')
         header.innerHTML = content.title
-        newDiv.appendChild(header)
+
+        const headerAnchor = document.createElement('a');
+        headerAnchor.href = `./comments.html?sub=${content.subreddit}&id=${name}&title=${title}"`
+        
+        headerAnchor.appendChild(header)
+        newDiv.appendChild(headerAnchor)
+        
     
     //FOR URL
         if(content.url && content.link_flair_type == 'text'){
@@ -67,6 +88,8 @@ const getResults = async() => {
             videoContent.src = content.secure_media_embed.media_domain_url
            videoContent.classList.add('movies')
             newDiv.appendChild(videoContent)
+            mediaType = 'yt'
+            headerAnchor.href = `./comments.html?sub=${content.subreddit}&id=${name}&title=${title}&yt=${content.secure_media_embed.media_domain_url}`
        
             
 
@@ -76,6 +99,8 @@ const getResults = async() => {
             videoContent.controls = true;
             videoContent.classList.add('movies')
             newDiv.appendChild(videoContent)
+            mediaType = 'mov'
+            headerAnchor.href = `./comments.html?sub=${content.subreddit}&id=${name}&title=${title}&mov=${content.media.reddit_video.fallback_url}`
           
 
         } else if(content.crosspost_parent_list && content.crosspost_parent_list[0].secure_media && content.crosspost_parent_list[0].secure_media.reddit_video && content.crosspost_parent_list[0].secure_media.reddit_video.fallback_url){
@@ -84,16 +109,30 @@ const getResults = async() => {
             videoContent.controls = true;
             videoContent.classList.add('movies')
             newDiv.appendChild(videoContent)
+            mediaType = 'mov'
+            headerAnchor.href = `./comments.html?sub=${content.subreddit}&id=${name}&title=${title}&mov=${content.crosspost_parent_list[0].secure_media.reddit_video.fallback_url}`
+
+        } else if(content.preview && content.preview.reddit_video_preview && content.preview.reddit_video_preview.fallback_url){
+            let videoContent = document.createElement('video')
+            videoContent.src = content.preview.reddit_video_preview.fallback_url
+            videoContent.controls = true;
+            videoContent.classList.add('movies')
+            newDiv.appendChild(videoContent)
+            mediaType = 'mov'
+            headerAnchor.href = `./comments.html?sub=${content.subreddit}&id=${name}&title=${title}&mov=${content.preview.reddit_video_preview.fallback_url}`
         
         } else if(content.is_reddit_media_domain == true){
             let image = document.createElement('img')
             image.src = content.url_overridden_by_dest
             image.classList.add('image')
             newDiv.appendChild(image)
+            mediaType = 'img'
+            headerAnchor.href = `./comments.html?sub=${content.subreddit}&id=${name}&title=${title}&img=${content.url_overridden_by_dest}`
         } 
 
     //FOR GETTING TEXT IN THE ELEMENT
     if(content.selftext){
+        selfText = true
         let text = document.createElement('p')
         text.textContent = content.selftext
         // console.log(text)
@@ -102,14 +141,27 @@ const getResults = async() => {
         newDiv.append(textDiv)
         text.classList.add('text')
         textDiv.append(text)
-        // console.log(text.innerHTML.length)
+        // headerAnchor.href = `./comments.html?sub=${content.subreddit}&id=${name}&title=${title}&text=${text}"`
+        
 }
 
 
-
+mediaType = null
+selfText = null
     })
-
+   
+const headerClass = document.getElementsByClassName('header');
+[...headerClass].forEach(header => {
+    header.addEventListener('click', function() {
+        console.log(this.dataset.info)
+    })
+})
 
 }
+
 
 getResults()
+
+
+
+

@@ -1,9 +1,20 @@
 const test = document.getElementById('test')
 let replyItem = [];
 
+const urlParams = new URLSearchParams(window.location.search);
+    const originSubreddit = urlParams.get('sub');
+    const userID = urlParams.get('id');
+    const postTitle = urlParams.get('title')
+    const img = urlParams.get('img')
+    const yt = urlParams.get('yt')
+    const mov = urlParams.get('mov')
+
+
+
+
 
 const fetchComments = async () => {
-    const data = await fetch("https://www.reddit.com/r/popular/comments/10wwoz1/how_do_multiple_programming_languages_make_one/.json");
+    const data = await fetch(`https://www.reddit.com/r/${originSubreddit}/comments/${userID}/${postTitle}/.json`);
     const results = await data.json();
 
     const postInfo = document.createElement('div')
@@ -16,10 +27,14 @@ const fetchComments = async () => {
 
     const originURL = document.createElement('p')
     // originURL.innerHTML = results[0].data.children[0].data.permalink
-    originURL.innerHTML = 'View Original Post'
+    const URLAnchor = document.createElement('a')
+    URLAnchor.href = results[0].data.children[0].data.url
+    URLAnchor.target = "_blank"
+    originURL.innerHTML = 'View Source'
     originURL.classList.add('origin-url');
+    URLAnchor.append(originURL)
 
-    postInfo.append(subReddit, originURL)
+    postInfo.append(subReddit, URLAnchor)
     
     const post = document.createElement('div')
     post.classList.add('post')
@@ -45,12 +60,29 @@ const fetchComments = async () => {
     postText.innerHTML = results[0].data.children[0].data.selftext
     postText.classList.add('post-text')
 
+    post.append(postAuthor, title, postText)
+
+    if(img !== null){
+        const image = document.createElement('img')
+        image.src = img
+        image.classList.add('post-image')
+        post.append(image)
+    }
+    if(mov !== null){
+        const video = document.createElement('video')
+        video.src = mov
+        video.classList.add('post-video')
+        video.controls = true;
+        post.append(video)
+    }
+
     const OPupvotes = document.createElement('p')
     OPupvotes.innerHTML = results[0].data.children[0].data.ups
     OPupvotes.classList.add('op-upvotes');
 
   
-    post.append(postAuthor, title, postText, OPupvotes)
+    
+    post.append(OPupvotes)
 
 // FOR GENERATING THE REPLIES
     // const replyContainer = document.createElement('div')
@@ -60,11 +92,12 @@ const fetchComments = async () => {
     //this below (comments) is the array of primary comments, each with additional comments inside
     const comments = results[1].data.children
     comments.forEach(comment => {
+       
 
         const replyContainer = document.createElement('div')
         replyContainer.classList.add('reply-container')
         document.body.append(replyContainer)
-        
+        if(typeof comment.data.author !== 'undefined'){
         const authorInput = document.createElement('p')
         authorInput.innerHTML = comment.data.author
         authorInput.classList.add('commentAuthor')
@@ -81,7 +114,7 @@ const fetchComments = async () => {
         updoots.classList.add('upvotes')
         replyContainer.append(updoots)
 
-        
+        }
         const firstReply = comment.data.replies
         
 
@@ -202,15 +235,16 @@ const fetchComments = async () => {
           }
                 
           
-           //used for single outlier, would probably be better with a while loop that says if it's increasing but doesn't equal five to search for the next value that equals +5 and just drop it in rather than swithing it
-           orderedComments.forEach(arr => {
+        //FOR ASSURING THAT THE COMMENTS AFTER ORDERED ARE SEQUENTIAL IN COMMENT ORDER. FOR RARE EDGE CASES
+        orderedComments.forEach(arr => {
             for (let i = 0; i < arr.length - 1; i++){
                 if(arr[i]['depth'] < arr[i+1]['depth'] && (arr[i]['depth'] != arr[i+1]['depth'] - 5)){
-                    temp = arr[i + 1];
-                    arr[i + 1] = arr[i + 2]
-                    arr[i + 2] = temp
+                    temp = arr.slice(i)
+                    const position = temp.findIndex(val => val['depth'] - 5 == temp[0]['depth'])
+                    const alter = temp.splice(position, 1)
+                    temp.splice(1, 0, ...alter)
+                    arr.splice(i, arr.length - 1, ...temp)
                 }
-                
             }
         })
 
@@ -235,30 +269,119 @@ const fetchComments = async () => {
               // threadResponse.innerHTML = arr[i]['item'] + '</br>' + 'depth: ' + arr[i]['depth']
               threadResponse.innerHTML = arr[i]['item']
               threadExtension.classList.add('thread-extension')
+              threadExtension.setAttribute('data-depth', arr[i]['depth'])
+
               commentChain.append(threadExtension)
               threadExtension.append(threadResponse)
               // threadExtension.setAttribute('data-indent', arr[i]['depth'])
               
               const upvotes = document.createElement('p')
-              upvotes.innerHTML = 'Upvotes: ' + arr[i]['ups']
+              upvotes.innerHTML = 'Upvotes: ' + arr[i]['ups'] 
               upvotes.classList.add('upvotes')
               
               threadExtension.append(upvotes)
 
               threadExtension.style.left = arr[i]['depth'] * 20 + 'px'
               
-              
-
+            
             }
-
-
           })
                       
             
-          console.log(orderedComments)
+        //   console.log(orderedComments)
               })
+
+
+        //FOR EXPANDING AND COLLAPSING THE COMMENTS
+
+        const threadExtension = document.getElementsByClassName('thread-extension')
+
+        for (let i = 0; i < threadExtension.length; i++){
+            
+            if(parseInt(threadExtension[i].getAttribute('data-depth')) > 10){
+                threadExtension[i].classList.add('hideThread')
+
+                if(parseInt(threadExtension[i - 1].getAttribute('data-depth')) == 9){
+                    const showOrRemove = document.createElement('p')
+                    showOrRemove.setAttribute('data-opened', false)
+                    showOrRemove.innerHTML = 'read more'
+                    showOrRemove.classList.add('showOrRemove')
+                    threadExtension[i - 1].append(showOrRemove)
+                }
+            } 
+            }
+            
+            
+
+            const showOrRemove = document.getElementsByClassName('showOrRemove');
+            for(let i = 0; i < showOrRemove.length; i++){
+            showOrRemove[i].addEventListener('click', function(e){
+                const parent = e.target.parentNode
+                let nextSiblingElement = parent.nextElementSibling;
+
+                const siblings = []
+                while(nextSiblingElement !== null && parseInt(nextSiblingElement.getAttribute('data-depth')) > parseInt(parent.getAttribute('data-depth'))){
+                    siblings.push(nextSiblingElement);
+                    nextSiblingElement = nextSiblingElement.nextElementSibling
+                }
+
+                if(showOrRemove[i].getAttribute('data-opened') === 'false'){
+                    showOrRemove[i].innerHTML = 'read less'
+                    for(let k = 0; k < siblings.length; k++){
+                        siblings[k].classList.remove('hideThread')
+                    }
+                    showOrRemove[i].setAttribute('data-opened', true)
+
+                } else if(showOrRemove[i].getAttribute('data-opened') === 'true'){
+                    showOrRemove[i].innerHTML = 'read more'
+
+                    for(let k = 0; k < siblings.length; k++){
+                        siblings[k].classList.add('hideThread')
+                        showOrRemove[i].setAttribute('data-opened', false)
+                    }
+
+                }
+                
+
+               
+             
               
+
+
+
+
+            })
+        }
+        
+                     
 }
 
 fetchComments()
 
+// setTimeout(() => {
+    // window.addEventListener('load', () => {
+    // document.addEventListener('DOMContentLoaded', () => {
+        // const replyContainer = document.getElementsByClassName('reply-container')
+        // console.log('it has finished')
+        // for (let i = 0; i < replyContainer.length; i++){
+        //     // threadExtension[i].style.display = 'none'
+        //     console.log(replyContainer[i])
+            
+    //     }
+    //     // })
+    // })
+
+// }, 10000)
+
+// replyContainer = [...replyContainer]
+
+
+
+// window.addEventListener('load', ()=> {
+
+// for (let i = 0; i < threadExtension.length; i++){
+//     // threadExtension[i].style.display = 'none'
+//     console.log(threadExtension[i])
+   
+// }
+// })

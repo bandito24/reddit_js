@@ -1,6 +1,7 @@
 body{
     text-align: center;
-    width: 100%
+    width: 98%;
+    margin: 0 auto;
 }
 
 .origin-url{
@@ -28,12 +29,14 @@ body{
     padding-bottom: 50px;
 }
 
-/* .first-reply{
-    width: 500px;
-    background-color: bisque;
-    margin-bottom: 10px;
-    border-radius: 8px;
-} */
+.post-image{
+    width: 400px;
+    height: auto;
+}
+.post-video{
+    width: 400px;
+    height: auto;
+}
 .reply-container{
     width: 500px;
     background-color: bisque;
@@ -65,4 +68,16 @@ body{
 
 .upvotes{
     text-align: left;
+}
+
+.showOrRemove{
+    color: red;
+    text-decoration: underline;
+}
+.showOrRemove:hover{
+    cursor: pointer;
+}
+
+.hideThread{
+    display: none;
 }
